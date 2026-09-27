@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  rust:
+    name: Rust format, lint and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Lint
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Test
+        run: cargo test --workspace
+
+  android-source:
+    name: Android source boundary check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assert Kotlin UI has no direct networking stack
+        run: |
+          ! grep -R -n -E 'import .*retrofit|import .*okhttp|https?://' android/app/src/main/java
+      - name: Assert Gradle project descriptors exist
+        run: test -f android/settings.gradle.kts && test -f android/app/build.gradle.kts

@@ -16,4 +16,4 @@ As checked on 2026-09-28 (GMT+8), this execution environment has no `cargo` bina
 
 Open `android/` in Android Studio. The Compose shell is intentionally independent of a generated Rust binding. `RustCoreGateway` is the seam that will later be implemented by JNI/UniFFI/C ABI.
 
-The current Rust transport seam is covered by repository contract tests for relative paths, empty headers, and session-cookie forwarding. The Android module still has no Gradle wrapper, so Android checks require opening `android/` in Android Studio or provisioning a local Gradle/JDK/SDK toolchain.
+The current Rust transport seam is covered by repository contract tests for relative paths, empty headers, session-cookie forwarding and login form requests. The Auth interactor is covered for restore, login success/failure, and logout state transitions. The Android module still has no Gradle wrapper, so Android checks require opening `android/` in Android Studio or provisioning a local Gradle/JDK/SDK toolchain.

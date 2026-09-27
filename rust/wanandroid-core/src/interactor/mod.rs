@@ -1,5 +1,6 @@
 use crate::repository::HomeRepository;
 
+pub mod auth;
 pub mod home;
 
 pub struct CoreInteractor<R> {

@@ -15,6 +15,8 @@ User event
 
 The Rust core owns API paths, DTO decoding, error mapping, pagination and session rules. Kotlin owns lifecycle, Compose rendering, navigation, WebView/external links and Android-specific persistence adapters.
 
+The current core slices are Home and Auth. Auth login posts form credentials, stores returned cookies and user identity, restores an existing session, and clears state on successful logout.
+
 ## Android boundary
 
 `RustCoreGateway` is the temporary Kotlin seam for the generated Rust binding. It exposes snapshots and action dispatch without allowing UI code to call Retrofit. The next binding step can replace its implementation with JNI, UniFFI or a C ABI while keeping Compose screens unchanged.

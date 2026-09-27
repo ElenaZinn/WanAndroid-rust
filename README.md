@@ -4,8 +4,10 @@ Rust-first WanAndroid client foundation. Android UI is Kotlin/Jetpack Compose; s
 
 ## Current scope
 
-- Rust `wanandroid-core` crate with API DTOs, domain models, repository abstraction and Home interactor.
+- Rust `wanandroid-core` crate with API DTOs, domain models, repository abstraction and Home/Auth interactors.
 - Explicit `Action -> Reducer -> State + Effect` data flow.
+- Session-aware transport boundary with login Cookie persistence and logout cleanup.
+- JSON-friendly binding contract in `docs/binding-contract.md`.
 - Android Kotlin Compose shell with a platform-neutral `RustCoreGateway` seam.
 - No iOS code in the current phase.
 

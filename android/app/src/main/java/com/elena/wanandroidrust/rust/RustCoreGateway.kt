@@ -10,6 +10,12 @@ data class HomeSnapshot(
     val canLoadMore: Boolean = true,
 )
 
+data class AuthSnapshot(
+    val username: String? = null,
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+)
+
 data class ArticleSnapshot(
     val id: Long,
     val title: String,
@@ -25,6 +31,12 @@ sealed interface HomeAction {
     data class ToggleCollect(val articleId: Long) : HomeAction
 }
 
+sealed interface AuthAction {
+    data object Restore : AuthAction
+    data class Login(val username: String, val password: String) : AuthAction
+    data object Logout : AuthAction
+}
+
 /**
  * Kotlin UI's only gateway to the shared business core.
  *
@@ -34,5 +46,7 @@ sealed interface HomeAction {
  */
 interface RustCoreGateway {
     val homeState: StateFlow<HomeSnapshot>
+    val authState: StateFlow<AuthSnapshot>
     fun dispatch(action: HomeAction)
+    fun dispatch(action: AuthAction)
 }

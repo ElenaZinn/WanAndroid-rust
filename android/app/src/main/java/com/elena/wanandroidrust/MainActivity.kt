@@ -16,6 +16,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.elena.wanandroidrust.rust.AuthAction
+import com.elena.wanandroidrust.rust.AuthSnapshot
+import com.elena.wanandroidrust.rust.HomeAction
 import com.elena.wanandroidrust.rust.HomeSnapshot
 import com.elena.wanandroidrust.rust.RustCoreGateway
 
@@ -52,10 +55,19 @@ private fun HomeScreen(gateway: RustCoreGateway) {
 
 private class PreviewRustCoreGateway : RustCoreGateway {
     private val _state = kotlinx.coroutines.flow.MutableStateFlow(HomeSnapshot())
+    private val _authState = kotlinx.coroutines.flow.MutableStateFlow(AuthSnapshot())
     override val homeState = _state
-    override fun dispatch(action: com.elena.wanandroidrust.rust.HomeAction) {
-        if (action is com.elena.wanandroidrust.rust.HomeAction.Load) {
+    override val authState = _authState
+
+    override fun dispatch(action: HomeAction) {
+        if (action is HomeAction.Load) {
             _state.value = HomeSnapshot(isLoading = true)
+        }
+    }
+
+    override fun dispatch(action: AuthAction) {
+        if (action is AuthAction.Restore) {
+            _authState.value = AuthSnapshot()
         }
     }
 }
