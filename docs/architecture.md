@@ -19,6 +19,8 @@ The Rust core owns API paths, DTO decoding, error mapping, pagination and sessio
 
 `RustCoreGateway` is the temporary Kotlin seam for the generated Rust binding. It exposes snapshots and action dispatch without allowing UI code to call Retrofit. The next binding step can replace its implementation with JNI, UniFFI or a C ABI while keeping Compose screens unchanged.
 
+The Rust transport boundary accepts a structured `HttpRequest` containing a relative API path and headers. Repositories build these requests, load session cookies from `SessionStore`, and attach the `Cookie` header before the platform adapter executes the request. Kotlin UI and platform adapters therefore do not own session or request-construction rules.
+
 ## Infrastructure diagram
 
 ```text
