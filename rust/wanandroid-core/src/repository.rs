@@ -48,7 +48,7 @@ impl<C, S> WanAndroidRepository<C, S> {
         Self { client, session }
     }
 
-    fn get(&self, path: impl Into<String>) -> Result<HttpResponse, RepositoryError>
+    pub(crate) fn get(&self, path: impl Into<String>) -> Result<HttpResponse, RepositoryError>
     where
         C: HttpClient,
         S: SessionStore,
@@ -58,7 +58,7 @@ impl<C, S> WanAndroidRepository<C, S> {
             .map_err(RepositoryError::Transport)
     }
 
-    fn post_form(
+    pub(crate) fn post_form(
         &self,
         path: impl Into<String>,
         form: BTreeMap<String, String>,
@@ -76,7 +76,7 @@ impl<C, S> WanAndroidRepository<C, S> {
             .map_err(RepositoryError::Transport)
     }
 
-    fn decode<T: serde::de::DeserializeOwned>(&self, body: &str) -> Result<T, RepositoryError> {
+    pub(crate) fn decode<T: serde::de::DeserializeOwned>(&self, body: &str) -> Result<T, RepositoryError> {
         let envelope: ApiEnvelope<serde_json::Value> = serde_json::from_str(body)
             .map_err(|error| RepositoryError::Decode(error.to_string()))?;
         if envelope.error_code != 0 {
