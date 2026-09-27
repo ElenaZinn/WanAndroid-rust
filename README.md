@@ -7,7 +7,7 @@ Rust-first WanAndroid client foundation. Android UI is Kotlin/Jetpack Compose; s
 - Rust `wanandroid-core` crate with API DTOs, domain models, repository abstraction and Home interactor.
 - Explicit `Action -> Reducer -> State + Effect` data flow.
 - Android Kotlin Compose shell with a platform-neutral `RustCoreGateway` seam.
-- No iOS code and no GitHub remote yet.
+- No iOS code in the current phase.
 
 ## Local verification
 
@@ -31,6 +31,4 @@ Compose UI -> ViewModel/StateFlow -> RustCoreGateway -> Interactor
                                       WanAndroid API
 ```
 
-## Later GitHub setup
-
-After the local implementation is reviewed, create a public repository named `WanAndroid-rust`, add its remote, and push `main`. No remote is configured by this local bootstrap.
+GitHub remote: `git@github.com:ElenaZinn/WanAndroid-rust.git`
