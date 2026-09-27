@@ -21,6 +21,7 @@ import com.elena.wanandroidrust.rust.AuthSnapshot
 import com.elena.wanandroidrust.rust.HomeAction
 import com.elena.wanandroidrust.rust.HomeSnapshot
 import com.elena.wanandroidrust.rust.RustCoreGateway
+import com.elena.wanandroidrust.ui.HomeViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,7 +36,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun HomeScreen(gateway: RustCoreGateway) {
-    val state by gateway.homeState.collectAsState()
+    val viewModel = HomeViewModel(gateway)
+    val state by viewModel.state.collectAsState()
     Column(
         modifier = Modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -47,7 +49,7 @@ private fun HomeScreen(gateway: RustCoreGateway) {
             state.articles.isEmpty() -> Text("No articles yet")
             else -> state.articles.forEach { Text(it.title) }
         }
-        Button(onClick = { gateway.dispatch(com.elena.wanandroidrust.rust.HomeAction.Load) }) {
+        Button(onClick = viewModel::onAppear) {
             Text("Load from Rust core")
         }
     }

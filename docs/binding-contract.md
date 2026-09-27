@@ -18,13 +18,13 @@ The current binding contract is JSON-friendly and platform-neutral. It is intent
 
 `CoreSnapshot` contains feature snapshots. `HomeSnapshot` exposes plain arrays and nullable error text; it never exposes `LoadState` implementation details to Kotlin.
 
-The next implementation step is an opaque core handle that owns repository/interactors and exposes:
+The next implementation step is a generated native adapter that owns a Home-capable `CoreHandle`, creates the production HTTP client and exposes `dispatch_json` / `snapshot_json` to Kotlin. Auth, Search, Project and Collection will be added to the same opaque-handle pattern rather than passed directly to Kotlin.
 
 ```text
-create() -> handle
+create(repository) -> opaque handle
 snapshot(handle) -> JSON snapshot
- dispatch(handle, JSON action) -> JSON effects/snapshot
- destroy(handle)
+dispatch(handle, JSON action) -> JSON snapshot
+destroy(handle)
 ```
 
-The handle must be single-owner or explicitly synchronized. UI adapters must convert snapshots to `StateFlow` and must not call Retrofit or assemble WanAndroid requests.
+The handle synchronizes access internally. UI adapters convert snapshots to `StateFlow` and must not call Retrofit or assemble WanAndroid requests.

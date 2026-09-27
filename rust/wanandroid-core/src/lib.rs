@@ -11,7 +11,7 @@ pub mod transport;
 
 pub use collection::{CollectionPage, CollectionRepository};
 pub use domain::{Article, ArticlePage, Banner, Page, Tag};
-pub use ffi::{CoreAction, CoreSnapshot, HomeSnapshot};
+pub use ffi::{BindingError, CoreAction, CoreHandle, CoreSnapshot, HomeSnapshot};
 pub use interactor::auth::{AuthAction, AuthEffect, AuthInteractor, AuthState};
 pub use interactor::collection::{CollectionAction, CollectionEffect, CollectionInteractor, CollectionState};
 pub use interactor::home::{HomeAction, HomeEffect, HomeInteractor, HomeState};
