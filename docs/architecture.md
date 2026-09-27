@@ -15,7 +15,7 @@ User event
 
 The Rust core owns API paths, DTO decoding, error mapping, pagination and session rules. Kotlin owns lifecycle, Compose rendering, navigation, WebView/external links and Android-specific persistence adapters.
 
-The current core slices are Home, Auth and Search. Auth login posts form credentials, stores returned cookies and user identity, restores an existing session, and clears state on successful logout. Search owns hot-key fetching, keyword or author query construction, paging and user-input validation; Kotlin only renders the resulting state.
+The current core slices are Home, Auth, Search, Project and Collection. Auth login posts form credentials, stores returned cookies and user identity, restores an existing session, and clears state on successful logout. Search, Project and Collection own query construction, paging, input validation and collection mutation effects; Kotlin only renders the resulting state.
 
 ## Android boundary
 
