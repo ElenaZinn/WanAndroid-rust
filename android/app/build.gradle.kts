@@ -14,16 +14,14 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
+        ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
     }
 
     buildFeatures { compose = true }
-    externalNativeBuild {
-        cmake { path = file("src/main/cpp/CMakeLists.txt") }
+    sourceSets {
+        getByName("main").jniLibs.srcDirs("../../rust-lib")
     }
     ndkVersion = "27.2.12479018"
-    defaultConfig {
-        ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
-    }
 }
 
 dependencies {
@@ -34,5 +32,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation("net.java.dev.jna:jna:5.14.0@aar")
     testImplementation("junit:junit:4.13.2")
 }

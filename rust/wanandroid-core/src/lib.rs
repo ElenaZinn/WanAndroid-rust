@@ -1,7 +1,10 @@
-pub mod c_abi;
+#![allow(clippy::empty_line_after_doc_comments)]
+
 pub mod collection;
 pub mod domain;
 pub mod ffi;
+
+uniffi::include_scaffolding!("wanandroid");
 pub mod interactor;
 pub mod project;
 pub mod repository;
@@ -13,7 +16,7 @@ pub mod transport;
 
 pub use collection::{CollectionPage, CollectionRepository};
 pub use domain::{Article, ArticlePage, Banner, Page, Tag};
-pub use ffi::{BindingError, CoreAction, CoreHandle, CoreSnapshot, HomeSnapshot};
+pub use ffi::{CoreAction, CoreHandle, CoreRuntime, CoreSnapshot, HomeSnapshot};
 pub use interactor::auth::{AuthAction, AuthEffect, AuthInteractor, AuthState};
 pub use interactor::collection::{
     CollectionAction, CollectionEffect, CollectionInteractor, CollectionState,

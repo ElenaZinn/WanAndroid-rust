@@ -6,12 +6,14 @@ use crate::interactor::home::{HomeAction, HomeInteractor, HomeState};
 use crate::interactor::project::{ProjectAction, ProjectInteractor, ProjectState};
 use crate::interactor::search::{SearchAction, SearchInteractor, SearchState};
 use crate::project::ProjectRepository;
-use crate::repository::{AuthRepository, HomeRepository};
-use crate::search::HotKey;
-use crate::search::SearchRepository;
+use crate::repository::{AuthRepository, HomeRepository, WanAndroidRepository};
+use crate::reqwest_client::ReqwestHttpClient;
+use crate::search::{HotKey, SearchRepository};
+use crate::session::MemorySessionStore;
 use crate::state::LoadState;
 use serde::{Deserialize, Serialize};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CoreSnapshot {
@@ -92,26 +94,8 @@ pub enum CoreAction {
     CollectionUncollect { origin_id: u64 },
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum BindingError {
-    InvalidAction(String),
-    Serialization(String),
-}
-
-impl std::fmt::Display for BindingError {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::InvalidAction(message) => write!(formatter, "invalid action: {message}"),
-            Self::Serialization(message) => write!(formatter, "serialization error: {message}"),
-        }
-    }
-}
-
-impl std::error::Error for BindingError {}
-
-/// Opaque core ownership for a generated JNI/UniFFI/C-ABI adapter.
-/// Adapters exchange JSON only, so Android cannot reach repositories or state-machine details.
-pub struct CoreHandle<R> {
+/// Generic business runtime used by host tests and the generated UniFFI facade.
+pub struct CoreRuntime<R> {
     home: Mutex<HomeInteractor<R>>,
     auth: Mutex<AuthInteractor<R>>,
     search: Mutex<SearchInteractor<R>>,
@@ -119,7 +103,7 @@ pub struct CoreHandle<R> {
     collection: Mutex<CollectionInteractor<R>>,
 }
 
-impl<R> CoreHandle<R>
+impl<R> CoreRuntime<R>
 where
     R: Clone
         + HomeRepository
@@ -139,11 +123,11 @@ where
     }
 
     pub fn snapshot(&self) -> CoreSnapshot {
-        let home = self.home.lock().expect("core handle mutex poisoned");
-        let auth = self.auth.lock().expect("core handle mutex poisoned");
-        let search = self.search.lock().expect("core handle mutex poisoned");
-        let project = self.project.lock().expect("core handle mutex poisoned");
-        let collection = self.collection.lock().expect("core handle mutex poisoned");
+        let home = self.home.lock().expect("core runtime mutex poisoned");
+        let auth = self.auth.lock().expect("core runtime mutex poisoned");
+        let search = self.search.lock().expect("core runtime mutex poisoned");
+        let project = self.project.lock().expect("core runtime mutex poisoned");
+        let collection = self.collection.lock().expect("core runtime mutex poisoned");
         CoreSnapshot {
             home: HomeSnapshot::from(&home.state),
             auth: AuthSnapshot::from(&auth.state),
@@ -153,19 +137,7 @@ where
         }
     }
 
-    pub fn snapshot_json(&self) -> Result<String, BindingError> {
-        serde_json::to_string(&self.snapshot())
-            .map_err(|error| BindingError::Serialization(error.to_string()))
-    }
-
-    pub fn dispatch_json(&self, action_json: &str) -> Result<String, BindingError> {
-        let action: CoreAction = serde_json::from_str(action_json)
-            .map_err(|error| BindingError::InvalidAction(error.to_string()))?;
-        self.dispatch(action)?;
-        self.snapshot_json()
-    }
-
-    pub fn dispatch(&self, action: CoreAction) -> Result<(), BindingError> {
+    pub fn dispatch(&self, action: CoreAction) {
         match action {
             CoreAction::HomeLoad => self.run_home(HomeAction::Load),
             CoreAction::HomeRefresh => self.run_home(HomeAction::Refresh),
@@ -205,54 +177,90 @@ where
         }
     }
 
-    fn run_home(&self, action: HomeAction) -> Result<(), BindingError> {
-        let mut feature = self.home.lock().expect("core handle mutex poisoned");
+    fn run_home(&self, action: HomeAction) {
+        let mut feature = self.home.lock().expect("core runtime mutex poisoned");
         let effects = feature.dispatch(action).effects;
         for effect in effects {
             let result = feature.run(effect);
             feature.dispatch(result);
         }
-        Ok(())
     }
 
-    fn run_auth(&self, action: AuthAction) -> Result<(), BindingError> {
-        let mut feature = self.auth.lock().expect("core handle mutex poisoned");
+    fn run_auth(&self, action: AuthAction) {
+        let mut feature = self.auth.lock().expect("core runtime mutex poisoned");
         let effects = feature.dispatch(action);
         for effect in effects {
             let result = feature.run(effect);
             feature.dispatch(result);
         }
-        Ok(())
     }
 
-    fn run_search(&self, action: SearchAction) -> Result<(), BindingError> {
-        let mut feature = self.search.lock().expect("core handle mutex poisoned");
+    fn run_search(&self, action: SearchAction) {
+        let mut feature = self.search.lock().expect("core runtime mutex poisoned");
         let effects = feature.dispatch(action).effects;
         for effect in effects {
             let result = feature.run(effect);
             feature.dispatch(result);
         }
-        Ok(())
     }
 
-    fn run_project(&self, action: ProjectAction) -> Result<(), BindingError> {
-        let mut feature = self.project.lock().expect("core handle mutex poisoned");
+    fn run_project(&self, action: ProjectAction) {
+        let mut feature = self.project.lock().expect("core runtime mutex poisoned");
         let effects = feature.dispatch(action).effects;
         for effect in effects {
             let result = feature.run(effect);
             feature.dispatch(result);
         }
-        Ok(())
     }
 
-    fn run_collection(&self, action: CollectionAction) -> Result<(), BindingError> {
-        let mut feature = self.collection.lock().expect("core handle mutex poisoned");
+    fn run_collection(&self, action: CollectionAction) {
+        let mut feature = self.collection.lock().expect("core runtime mutex poisoned");
         let effects = feature.dispatch(action).effects;
         for effect in effects {
             let result = feature.run(effect);
             feature.dispatch(result);
         }
-        Ok(())
+    }
+}
+
+type NativeRepository = WanAndroidRepository<ReqwestHttpClient, MemorySessionStore>;
+
+/// UniFFI object consumed by generated Kotlin today and generated Swift in a later iOS app.
+/// It intentionally exposes JSON snapshots/actions so every platform follows the same business
+/// contract while Rust retains ownership of transport, session and state transitions.
+pub struct CoreHandle {
+    runtime: CoreRuntime<NativeRepository>,
+}
+
+impl CoreHandle {
+    pub fn new(timeout_ms: u64) -> Self {
+        let client = ReqwestHttpClient::wanandroid(Duration::from_millis(timeout_ms.max(1)))
+            .expect("reqwest client configuration must be valid");
+        let repository = WanAndroidRepository::with_session(
+            Arc::new(client),
+            Arc::new(MemorySessionStore::default()),
+        );
+        Self {
+            runtime: CoreRuntime::new(repository),
+        }
+    }
+
+    pub fn snapshot_json(&self) -> String {
+        serde_json::to_string(&self.runtime.snapshot()).expect("core snapshot must serialize")
+    }
+
+    pub fn dispatch_json(&self, action_json: String) -> String {
+        match serde_json::from_str::<CoreAction>(&action_json) {
+            Ok(action) => self.runtime.dispatch(action),
+            Err(error) => return self.error_snapshot(format!("invalid action: {error}")),
+        }
+        self.snapshot_json()
+    }
+
+    fn error_snapshot(&self, message: String) -> String {
+        let mut snapshot = self.runtime.snapshot();
+        snapshot.home.error_message = Some(message);
+        serde_json::to_string(&snapshot).expect("core error snapshot must serialize")
     }
 }
 

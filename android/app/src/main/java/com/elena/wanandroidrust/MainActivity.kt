@@ -17,7 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
 import com.elena.wanandroidrust.rust.CoreJsonDecoder
-import com.elena.wanandroidrust.rust.JniRustCoreBinding
+import com.elena.wanandroidrust.rust.UniFfiRustCoreBinding
 import com.elena.wanandroidrust.rust.NativeRustCoreGateway
 import com.elena.wanandroidrust.rust.RustCoreGateway
 import com.elena.wanandroidrust.ui.CollectionScreen
@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val binding = JniRustCoreBinding()
+        val binding = UniFfiRustCoreBinding()
         nativeGateway = NativeRustCoreGateway(binding, lifecycleScope, CoreJsonDecoder::decode)
         setContent { MaterialTheme { WanAndroidApp(requireNotNull(nativeGateway)) } }
     }

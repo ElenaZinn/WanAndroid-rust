@@ -9,7 +9,7 @@ Rust-first WanAndroid client foundation. Android UI is Kotlin/Jetpack Compose; s
 - Production `ReqwestHttpClient` with Rustls and timeout is now available behind the `HttpClient` trait.
 - JSON-friendly binding contract in `docs/binding-contract.md`.
 - Migration matrix and native binding rollout in `docs/porting-guide.md`.
-- Native C ABI/JNI bridge: `android/app/src/main/cpp/` and `JniRustCoreBinding.kt`.
+- UniFFI-generated Android bridge: `rust/wanandroid-core/src/wanandroid.udl`, generated Kotlin bindings, and `UniFfiRustCoreBinding.kt`.
 - No iOS code in the current phase.
 
 ## Local verification
@@ -27,7 +27,10 @@ The five Compose feature surfaces are Home, Search, Project, Account/Login and C
 
 The project now includes Gradle Wrapper 8.7 and an NDK 27.2 Rust artifact script. The local validation intentionally stops at Gradle configuration and Rust/native artifact generation; it does not assemble an APK.
 
-## Architecture
+## UniFFI
+
+The Rust-first binding now uses UniFFI rather than the former hand-written C ABI/JNI bridge. The shared UDL is `rust/wanandroid-core/src/wanandroid.udl`; regenerate Android bindings with `./scripts/generate-uniffi-kotlin.sh`. Android packages the Rust cdylib as `libuniffi_wanandroid.so` and uses the generated Kotlin/JNA runtime. The same UDL can later generate Swift bindings; no iOS UI or application code is included.
+
 
 ```text
 Compose UI -> ViewModel/StateFlow -> RustCoreGateway -> Interactor

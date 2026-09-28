@@ -37,7 +37,7 @@ build_one() {
   env "CC_${target}=$linker" "AR_${target}=$TOOLCHAIN_BIN/llvm-ar" \
     cargo build -p wanandroid-core --release --target "$target"
   mkdir -p "$ROOT/android/rust-lib/$abi"
-  cp "$ROOT/target/$target/release/libwanandroid_core.so" "$ROOT/android/rust-lib/$abi/"
+  cp "$ROOT/target/$target/release/libwanandroid_core.so" "$ROOT/android/rust-lib/$abi/libuniffi_wanandroid.so"
 }
 
 build_one aarch64-linux-android arm64-v8a

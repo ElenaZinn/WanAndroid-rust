@@ -10,4 +10,4 @@ The binding boundary is:
 
 The Android project now contains a Gradle 8.7 wrapper. Its normal distribution URL is remote, while this workspace can use the downloaded distribution through `GRADLE_USER_HOME` when available.
 
-`scripts/build-rust-android.sh` builds the Rust `cdylib` for `arm64-v8a` and `x86_64` using Android NDK 27.2. The generated `.so` files are local build products and are intentionally ignored by Git. No APK build is required for the Rust/native source check.
+`scripts/build-rust-android.sh` now generates `libuniffi_wanandroid.so` for `arm64-v8a` and `x86_64`; Android packages those artifacts through `jniLibs` and the UniFFI-generated Kotlin runtime loads them with JNA.
