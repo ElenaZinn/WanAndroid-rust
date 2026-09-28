@@ -15,15 +15,15 @@ impl SearchRepository for FakeSearch {
     }
 
     fn search(&self, page: u32, _keyword: &str) -> Result<ArticlePage, RepositoryError> {
-        Ok(page(page, page >= 1))
+        Ok(search_page(page, page >= 1))
     }
 
     fn search_author(&self, page: u32, _author: &str) -> Result<ArticlePage, RepositoryError> {
-        Ok(page(page, true))
+        Ok(search_page(page, true))
     }
 }
 
-fn page(number: u32, over: bool) -> ArticlePage {
+fn search_page(number: u32, over: bool) -> ArticlePage {
     ArticlePage {
         page: Page {
             cur_page: number,
@@ -53,11 +53,14 @@ fn hot_keys_load_through_effect_and_update_state() {
 
     let action = interactor.run(effects.effects[0].clone());
     interactor.dispatch(action);
-    assert_eq!(interactor.state.hot_keys, LoadState::Ready(vec![HotKey {
-        id: 1,
-        name: "Rust".into(),
-        link: "/article/query/0/json?k=Rust".into(),
-    }]));
+    assert_eq!(
+        interactor.state.hot_keys,
+        LoadState::Ready(vec![HotKey {
+            id: 1,
+            name: "Rust".into(),
+            link: "/article/query/0/json?k=Rust".into(),
+        }])
+    );
 }
 
 #[test]
@@ -87,30 +90,36 @@ fn keyword_search_accumulates_pages_and_stops_after_last_page() {
     let action = interactor.run(next.effects[0].clone());
     interactor.dispatch(action);
 
-    assert_eq!(interactor.state.articles, LoadState::Ready(vec![
-        Article {
-            id: 1,
-            title: "Result 0".into(),
-            link: "https://example.test/result".into(),
-            author: "Elena".into(),
-            nice_date: "today".into(),
-            collect: false,
-            chapter_name: "Rust".into(),
-            tags: vec![],
-        },
-        Article {
-            id: 2,
-            title: "Result 1".into(),
-            link: "https://example.test/result".into(),
-            author: "Elena".into(),
-            nice_date: "today".into(),
-            collect: false,
-            chapter_name: "Rust".into(),
-            tags: vec![],
-        },
-    ]));
+    assert_eq!(
+        interactor.state.articles,
+        LoadState::Ready(vec![
+            Article {
+                id: 1,
+                title: "Result 0".into(),
+                link: "https://example.test/result".into(),
+                author: "Elena".into(),
+                nice_date: "today".into(),
+                collect: false,
+                chapter_name: "Rust".into(),
+                tags: vec![],
+            },
+            Article {
+                id: 2,
+                title: "Result 1".into(),
+                link: "https://example.test/result".into(),
+                author: "Elena".into(),
+                nice_date: "today".into(),
+                collect: false,
+                chapter_name: "Rust".into(),
+                tags: vec![],
+            },
+        ])
+    );
     assert!(!interactor.state.has_more);
-    assert!(interactor.dispatch(SearchAction::LoadNextPage).effects.is_empty());
+    assert!(interactor
+        .dispatch(SearchAction::LoadNextPage)
+        .effects
+        .is_empty());
 }
 
 #[test]
@@ -120,7 +129,10 @@ fn empty_keyword_is_a_renderable_error_without_network_effect() {
         keyword: "  ".into(),
     });
     assert!(result.effects.is_empty());
-    assert_eq!(interactor.state.articles, LoadState::Error("search keyword is empty".into()));
+    assert_eq!(
+        interactor.state.articles,
+        LoadState::Error("search keyword is empty".into())
+    );
 }
 
 #[test]

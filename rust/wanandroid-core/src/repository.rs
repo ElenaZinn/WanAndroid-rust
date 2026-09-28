@@ -37,9 +37,21 @@ pub struct WanAndroidRepository<C, S = crate::session::MemorySessionStore> {
     session: Arc<S>,
 }
 
+impl<C, S> Clone for WanAndroidRepository<C, S> {
+    fn clone(&self) -> Self {
+        Self {
+            client: self.client.clone(),
+            session: self.session.clone(),
+        }
+    }
+}
+
 impl<C> WanAndroidRepository<C> {
     pub fn new(client: Arc<C>) -> Self {
-        Self::with_session(client, Arc::new(crate::session::MemorySessionStore::default()))
+        Self::with_session(
+            client,
+            Arc::new(crate::session::MemorySessionStore::default()),
+        )
     }
 }
 
@@ -54,7 +66,10 @@ impl<C, S> WanAndroidRepository<C, S> {
         S: SessionStore,
     {
         self.client
-            .execute(&HttpRequest::get(path, cookie_headers(&self.session.load_cookies())))
+            .execute(&HttpRequest::get(
+                path,
+                cookie_headers(&self.session.load_cookies()),
+            ))
             .map_err(RepositoryError::Transport)
     }
 
@@ -76,7 +91,10 @@ impl<C, S> WanAndroidRepository<C, S> {
             .map_err(RepositoryError::Transport)
     }
 
-    pub(crate) fn decode<T: serde::de::DeserializeOwned>(&self, body: &str) -> Result<T, RepositoryError> {
+    pub(crate) fn decode<T: serde::de::DeserializeOwned>(
+        &self,
+        body: &str,
+    ) -> Result<T, RepositoryError> {
         let envelope: ApiEnvelope<serde_json::Value> = serde_json::from_str(body)
             .map_err(|error| RepositoryError::Decode(error.to_string()))?;
         if envelope.error_code != 0 {
@@ -112,14 +130,16 @@ impl<C: HttpClient, S: SessionStore> AuthRepository for WanAndroidRepository<C, 
         ]);
         let response = self.post_form("/user/login", form)?;
         let user: ApiLogin = self.decode(&response.body)?;
-        self.session.save_cookies(extract_cookies(&response.headers));
+        self.session
+            .save_cookies(extract_cookies(&response.headers));
+        let username = user.username.clone();
         self.session.save_user(AuthenticatedUser {
             id: user.id,
-            username: user.username,
+            username: username.clone(),
         });
         Ok(AuthenticatedUser {
             id: user.id,
-            username: user.username,
+            username,
         })
     }
 

@@ -9,7 +9,11 @@ struct FakeAuth {
 }
 
 impl AuthRepository for FakeAuth {
-    fn login(&self, _username: &str, _password: &str) -> Result<AuthenticatedUser, RepositoryError> {
+    fn login(
+        &self,
+        _username: &str,
+        _password: &str,
+    ) -> Result<AuthenticatedUser, RepositoryError> {
         self.login_result.clone()
     }
 
@@ -97,6 +101,9 @@ fn failed_login_is_renderable_error_state() {
     let finished = interactor.run(effects[0].clone());
     interactor.dispatch(finished);
 
-    assert_eq!(interactor.state.error_message.as_deref(), Some("api error -1: invalid credentials"));
+    assert_eq!(
+        interactor.state.error_message.as_deref(),
+        Some("api error -1: invalid credentials")
+    );
     assert!(!interactor.state.is_loading);
 }

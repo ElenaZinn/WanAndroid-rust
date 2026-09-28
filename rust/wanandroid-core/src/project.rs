@@ -58,7 +58,12 @@ struct ApiProjectArticle {
 
 impl From<ApiProjectCategory> for ProjectCategory {
     fn from(value: ApiProjectCategory) -> Self {
-        Self { id: value.id, name: value.name, order: value.order, visible: value.visible }
+        Self {
+            id: value.id,
+            name: value.name,
+            order: value.order,
+            visible: value.visible,
+        }
     }
 }
 
@@ -80,7 +85,11 @@ impl From<ApiProjectArticle> for ProjectArticle {
 
 pub trait ProjectRepository: Send + Sync {
     fn categories(&self) -> Result<Vec<ProjectCategory>, RepositoryError>;
-    fn articles(&self, page: u32, category_id: u64) -> Result<Page<ProjectArticle>, RepositoryError>;
+    fn articles(
+        &self,
+        page: u32,
+        category_id: u64,
+    ) -> Result<Page<ProjectArticle>, RepositoryError>;
 }
 
 impl<C: HttpClient, S: SessionStore> ProjectRepository for WanAndroidRepository<C, S> {
@@ -90,7 +99,11 @@ impl<C: HttpClient, S: SessionStore> ProjectRepository for WanAndroidRepository<
         Ok(categories.into_iter().map(Into::into).collect())
     }
 
-    fn articles(&self, page: u32, category_id: u64) -> Result<Page<ProjectArticle>, RepositoryError> {
+    fn articles(
+        &self,
+        page: u32,
+        category_id: u64,
+    ) -> Result<Page<ProjectArticle>, RepositoryError> {
         let response = self.get(format!("/project/list/{page}/json?cid={category_id}"))?;
         let page: crate::domain::ApiPage<ApiProjectArticle> = self.decode(&response.body)?;
         Ok(Page {

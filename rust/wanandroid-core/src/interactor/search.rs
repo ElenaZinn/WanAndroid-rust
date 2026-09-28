@@ -1,6 +1,6 @@
 use crate::domain::{Article, ArticlePage};
-use crate::repository::{RepositoryError, SearchRepository};
-use crate::search::HotKey;
+use crate::repository::RepositoryError;
+use crate::search::{HotKey, SearchRepository};
 use crate::state::{LoadState, ReduceResult};
 
 #[derive(Debug, Clone, PartialEq, Eq)]

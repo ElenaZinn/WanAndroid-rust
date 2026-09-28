@@ -13,7 +13,12 @@ pub struct CollectionState {
 
 impl Default for CollectionState {
     fn default() -> Self {
-        Self { articles: LoadState::Idle, next_page: 0, has_more: true, pending_change: None }
+        Self {
+            articles: LoadState::Idle,
+            next_page: 0,
+            has_more: true,
+            pending_change: None,
+        }
     }
 }
 
@@ -41,10 +46,18 @@ pub enum CollectionEffect {
     Uncollect { origin_id: u64 },
 }
 
-pub struct CollectionInteractor<R> { repository: R, pub state: CollectionState }
+pub struct CollectionInteractor<R> {
+    repository: R,
+    pub state: CollectionState,
+}
 
 impl<R: CollectionRepository> CollectionInteractor<R> {
-    pub fn new(repository: R) -> Self { Self { repository, state: CollectionState::default() } }
+    pub fn new(repository: R) -> Self {
+        Self {
+            repository,
+            state: CollectionState::default(),
+        }
+    }
 
     pub fn dispatch(&mut self, action: CollectionAction) -> ReduceResult<CollectionEffect> {
         match action {
@@ -59,7 +72,9 @@ impl<R: CollectionRepository> CollectionInteractor<R> {
                     LoadState::Ready(items) => LoadState::Refreshing(items.clone()),
                     other => other.clone(),
                 };
-                ReduceResult::effects([CollectionEffect::GetPage { page: self.state.next_page }])
+                ReduceResult::effects([CollectionEffect::GetPage {
+                    page: self.state.next_page,
+                }])
             }
             CollectionAction::LoadNextPage => ReduceResult::none(),
             CollectionAction::PageLoaded(result) => {
@@ -98,9 +113,15 @@ impl<R: CollectionRepository> CollectionInteractor<R> {
 
     pub fn run(&self, effect: CollectionEffect) -> CollectionAction {
         match effect {
-            CollectionEffect::GetPage { page } => CollectionAction::PageLoaded(self.repository.list(page)),
-            CollectionEffect::Collect { article_id } => CollectionAction::ChangeFinished(self.repository.collect(article_id)),
-            CollectionEffect::Uncollect { origin_id } => CollectionAction::ChangeFinished(self.repository.uncollect(origin_id)),
+            CollectionEffect::GetPage { page } => {
+                CollectionAction::PageLoaded(self.repository.list(page))
+            }
+            CollectionEffect::Collect { article_id } => {
+                CollectionAction::ChangeFinished(self.repository.collect(article_id))
+            }
+            CollectionEffect::Uncollect { origin_id } => {
+                CollectionAction::ChangeFinished(self.repository.uncollect(origin_id))
+            }
         }
     }
 }

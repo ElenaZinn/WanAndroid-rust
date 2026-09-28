@@ -18,7 +18,7 @@ The current binding contract is JSON-friendly and platform-neutral. It is intent
 
 `CoreSnapshot` contains feature snapshots. `HomeSnapshot` exposes plain arrays and nullable error text; it never exposes `LoadState` implementation details to Kotlin.
 
-The next implementation step is a generated native adapter that owns a Home-capable `CoreHandle`, creates the production HTTP client and exposes `dispatch_json` / `snapshot_json` to Kotlin. Auth, Search, Project and Collection will be added to the same opaque-handle pattern rather than passed directly to Kotlin.
+The current native path is now concrete rather than a Preview gateway: Rust exports an opaque C ABI handle, `JniRustCoreBinding` calls it, and `MainActivity` constructs `NativeRustCoreGateway`. Effects are dispatched on `Dispatchers.IO`; Compose observes decoded snapshots only.
 
 ```text
 create(repository) -> opaque handle

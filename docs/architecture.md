@@ -17,11 +17,13 @@ The Rust core owns API paths, DTO decoding, error mapping, pagination and sessio
 
 The current core slices are Home, Auth, Search, Project and Collection. Auth login posts form credentials, stores returned cookies and user identity, restores an existing session, and clears state on successful logout. Search, Project and Collection own query construction, paging, input validation and collection mutation effects; Kotlin only renders the resulting state.
 
+`ReqwestHttpClient` is the production blocking transport implementation. It uses Rustls, applies a per-client timeout, carries request/response headers for session handling, and remains behind `HttpClient`; native adapters must execute its effects off the Android UI thread.
+
 ## Android boundary
 
 `RustCoreGateway` is the temporary Kotlin seam for the generated Rust binding. It exposes snapshots and action dispatch without allowing UI code to call Retrofit. The next binding step can replace its implementation with JNI, UniFFI or a C ABI while keeping Compose screens unchanged.
 
-The Rust transport boundary accepts a structured `HttpRequest` containing a relative API path and headers. Repositories build these requests, load session cookies from `SessionStore`, and attach the `Cookie` header before the platform adapter executes the request. Kotlin UI and platform adapters therefore do not own session or request-construction rules.
+The Rust core now includes a production `ReqwestHttpClient` using Rustls and a timeout. The native C ABI owns the live repository/interactor handle and returns JSON snapshots; JNI only marshals strings and pointers.
 
 ## Infrastructure diagram
 

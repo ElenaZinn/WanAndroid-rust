@@ -1,6 +1,6 @@
 use wanandroid_core::{
-    Article, ArticlePage, Banner, HomeAction, HomeEffect, HomeInteractor, HomeRepository, LoadState,
-    Page, RepositoryError,
+    Article, ArticlePage, Banner, HomeAction, HomeEffect, HomeInteractor, HomeRepository,
+    LoadState, Page, RepositoryError,
 };
 
 struct FakeRepository;
@@ -67,12 +67,15 @@ fn paging_accumulates_articles_and_stops_at_last_page() {
         interactor.dispatch(action);
     }
 
-    assert_eq!(interactor.state.articles, LoadState::Ready(vec![
-        article(1, "Article 0"),
-        article(2, "Article 1"),
-    ]));
+    assert_eq!(
+        interactor.state.articles,
+        LoadState::Ready(vec![article(1, "Article 0"), article(2, "Article 1"),])
+    );
     assert!(!interactor.state.has_more);
-    assert!(interactor.dispatch(HomeAction::LoadNextPage).effects.is_empty());
+    assert!(interactor
+        .dispatch(HomeAction::LoadNextPage)
+        .effects
+        .is_empty());
 }
 
 fn article(id: u64, title: &str) -> Article {

@@ -13,7 +13,13 @@ pub struct ProjectState {
 
 impl Default for ProjectState {
     fn default() -> Self {
-        Self { categories: LoadState::Idle, articles: LoadState::Idle, selected_category: None, next_page: 0, has_more: false }
+        Self {
+            categories: LoadState::Idle,
+            articles: LoadState::Idle,
+            selected_category: None,
+            next_page: 0,
+            has_more: false,
+        }
     }
 }
 
@@ -32,10 +38,18 @@ pub enum ProjectEffect {
     GetArticles { page: u32, category_id: u64 },
 }
 
-pub struct ProjectInteractor<R> { repository: R, pub state: ProjectState }
+pub struct ProjectInteractor<R> {
+    repository: R,
+    pub state: ProjectState,
+}
 
 impl<R: ProjectRepository> ProjectInteractor<R> {
-    pub fn new(repository: R) -> Self { Self { repository, state: ProjectState::default() } }
+    pub fn new(repository: R) -> Self {
+        Self {
+            repository,
+            state: ProjectState::default(),
+        }
+    }
 
     pub fn dispatch(&mut self, action: ProjectAction) -> ReduceResult<ProjectEffect> {
         match action {
@@ -52,15 +66,23 @@ impl<R: ProjectRepository> ProjectInteractor<R> {
                 self.state.articles = LoadState::Loading;
                 self.state.next_page = 0;
                 self.state.has_more = true;
-                ReduceResult::effects([ProjectEffect::GetArticles { page: 0, category_id: id }])
+                ReduceResult::effects([ProjectEffect::GetArticles {
+                    page: 0,
+                    category_id: id,
+                }])
             }
             ProjectAction::LoadNextPage if self.state.has_more => {
-                let Some(category_id) = self.state.selected_category else { return ReduceResult::none() };
+                let Some(category_id) = self.state.selected_category else {
+                    return ReduceResult::none();
+                };
                 self.state.articles = match &self.state.articles {
                     LoadState::Ready(items) => LoadState::Refreshing(items.clone()),
                     other => other.clone(),
                 };
-                ReduceResult::effects([ProjectEffect::GetArticles { page: self.state.next_page, category_id }])
+                ReduceResult::effects([ProjectEffect::GetArticles {
+                    page: self.state.next_page,
+                    category_id,
+                }])
             }
             ProjectAction::LoadNextPage => ReduceResult::none(),
             ProjectAction::ArticlesLoaded(result) => {
@@ -84,8 +106,12 @@ impl<R: ProjectRepository> ProjectInteractor<R> {
 
     pub fn run(&self, effect: ProjectEffect) -> ProjectAction {
         match effect {
-            ProjectEffect::GetCategories => ProjectAction::CategoriesLoaded(self.repository.categories()),
-            ProjectEffect::GetArticles { page, category_id } => ProjectAction::ArticlesLoaded(self.repository.articles(page, category_id)),
+            ProjectEffect::GetCategories => {
+                ProjectAction::CategoriesLoaded(self.repository.categories())
+            }
+            ProjectEffect::GetArticles { page, category_id } => {
+                ProjectAction::ArticlesLoaded(self.repository.articles(page, category_id))
+            }
         }
     }
 }

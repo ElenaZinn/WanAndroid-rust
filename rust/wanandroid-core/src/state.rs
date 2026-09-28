@@ -25,7 +25,9 @@ pub struct ReduceResult<E> {
 
 impl<E> ReduceResult<E> {
     pub fn none() -> Self {
-        Self { effects: Vec::new() }
+        Self {
+            effects: Vec::new(),
+        }
     }
 
     pub fn effects<const N: usize>(effects: [E; N]) -> Self {

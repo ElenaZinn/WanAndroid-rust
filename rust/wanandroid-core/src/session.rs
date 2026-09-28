@@ -23,7 +23,11 @@ struct SessionState {
 
 impl SessionStore for MemorySessionStore {
     fn load_cookies(&self) -> Vec<String> {
-        self.state.lock().expect("session mutex poisoned").cookies.clone()
+        self.state
+            .lock()
+            .expect("session mutex poisoned")
+            .cookies
+            .clone()
     }
 
     fn save_cookies(&self, cookies: Vec<String>) {
@@ -31,7 +35,11 @@ impl SessionStore for MemorySessionStore {
     }
 
     fn load_user(&self) -> Option<AuthenticatedUser> {
-        self.state.lock().expect("session mutex poisoned").user.clone()
+        self.state
+            .lock()
+            .expect("session mutex poisoned")
+            .user
+            .clone()
     }
 
     fn save_user(&self, user: AuthenticatedUser) {
@@ -68,7 +76,10 @@ mod tests {
         });
         assert_eq!(store.load_cookies(), vec!["loginUserName=Elena"]);
         assert_eq!(store.load_user().expect("user").username, "Elena");
-        assert_eq!(cookie_headers(&store.load_cookies())["Cookie"], "loginUserName=Elena");
+        assert_eq!(
+            cookie_headers(&store.load_cookies())["Cookie"],
+            "loginUserName=Elena"
+        );
         store.clear();
         assert!(store.load_cookies().is_empty());
         assert!(store.load_user().is_none());

@@ -1,20 +1,10 @@
-use crate::repository::{AuthenticatedUser, AuthRepository, RepositoryError};
+use crate::repository::{AuthRepository, AuthenticatedUser, RepositoryError};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct AuthState {
     pub user: Option<AuthenticatedUser>,
     pub is_loading: bool,
     pub error_message: Option<String>,
-}
-
-impl Default for AuthState {
-    fn default() -> Self {
-        Self {
-            user: None,
-            is_loading: false,
-            error_message: None,
-        }
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -96,7 +86,9 @@ impl<R: AuthRepository> AuthInteractor<R> {
 
     pub fn run(&self, effect: AuthEffect) -> AuthAction {
         match effect {
-            AuthEffect::RestoreSession => AuthAction::SessionRestored(self.repository.restore_session()),
+            AuthEffect::RestoreSession => {
+                AuthAction::SessionRestored(self.repository.restore_session())
+            }
             AuthEffect::Login { username, password } => {
                 AuthAction::LoginFinished(self.repository.login(&username, &password))
             }

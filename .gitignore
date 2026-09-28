@@ -5,4 +5,6 @@ target/
 local.properties
 /build/
 android/**/build/
+android/rust-lib/*/*.so
+.tools/
 .DS_Store
