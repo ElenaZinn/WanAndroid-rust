@@ -20,7 +20,10 @@ android {
     externalNativeBuild {
         cmake { path = file("src/main/cpp/CMakeLists.txt") }
     }
-    ndkVersion = "27.0.12077973"
+    ndkVersion = "27.2.12479018"
+    defaultConfig {
+        ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
+    }
 }
 
 dependencies {

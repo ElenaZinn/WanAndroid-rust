@@ -8,4 +8,6 @@ The binding boundary is:
 - Native adapter: owns one `CoreHandle`, marshals `dispatch_json`/`snapshot_json`, and publishes snapshots to Kotlin.
 - Kotlin: `NativeRustCoreBinding` and `NativeRustCoreGateway` only translate UI actions and render decoded snapshots.
 
-No Android build is committed yet because the repository does not currently contain the generated binding toolchain or a Gradle wrapper. Adding a generated binding should be a separate, reproducible build step rather than hand-written API/network logic in the Compose module.
+The Android project now contains a Gradle 8.7 wrapper. Its normal distribution URL is remote, while this workspace can use the downloaded distribution through `GRADLE_USER_HOME` when available.
+
+`scripts/build-rust-android.sh` builds the Rust `cdylib` for `arm64-v8a` and `x86_64` using Android NDK 27.2. The generated `.so` files are local build products and are intentionally ignored by Git. No APK build is required for the Rust/native source check.

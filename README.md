@@ -25,6 +25,8 @@ The current native path is concrete rather than a Preview gateway: Rust exports 
 
 The five Compose feature surfaces are Home, Search, Project, Account/Login and Collection. Their ViewModel forwards typed actions to the gateway; Kotlin does not construct API requests or implement pagination.
 
+The project now includes Gradle Wrapper 8.7 and an NDK 27.2 Rust artifact script. The local validation intentionally stops at Gradle configuration and Rust/native artifact generation; it does not assemble an APK.
+
 ## Architecture
 
 ```text
