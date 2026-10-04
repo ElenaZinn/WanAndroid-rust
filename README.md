@@ -13,13 +13,24 @@ Porting history and the remaining matrix live in `docs/porting-guide.md`.
 
 ## Demo
 
-A recorded walkthrough lives at [`docs/demo/wanandroid-rust-demo.mp4`](docs/demo/wanandroid-rust-demo.mp4):
-home banner carousel, article detail, search, project categories, collection and account.
+**Home — banner carousel, article cards, pull-to-refresh, infinite scroll**
+
+![Home feed](docs/demo/01-home.gif)
+
+**Article detail (WebView) and search — keyword/author modes, hot keys, results**
+
+![Detail and search](docs/demo/02-detail-search.gif)
+
+**Project categories, collection and account**
+
+![Project, collection and account](docs/demo/03-project-account.gif)
+
+The full walkthrough with audio-free playback is [`docs/demo/wanandroid-rust-demo.mp4`](docs/demo/wanandroid-rust-demo.mp4),
+and it can be regenerated following `docs/demo-recording.md`.
 
 > The recording runs against a local proxy. `wanandroid.com`'s TLS certificate expired on
 > 2026-10-03 and the site redirects all plain HTTP to HTTPS, so a client that validates
 > certificates cannot reach the real API. The proxy relays real data; the app itself is unchanged.
-> See `docs/demo-recording.md` for the setup.
 
 ## Current scope
 
