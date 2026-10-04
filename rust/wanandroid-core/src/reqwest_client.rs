@@ -35,8 +35,10 @@ impl ReqwestHttpClient {
         Ok(Self { base_url, client })
     }
 
+    /// Production endpoint. The official API documentation asks clients to use the
+    /// bare `wanandroid.com` host instead of `www.wanandroid.com`.
     pub fn wanandroid(timeout: Duration) -> Result<Self, ReqwestClientError> {
-        Self::new("https://www.wanandroid.com", timeout)
+        Self::new("https://wanandroid.com", timeout)
     }
 
     fn headers(
@@ -63,6 +65,33 @@ impl ReqwestHttpClient {
     }
 }
 
+/// `reqwest::Error`'s own `Display` only reports "error sending request", which hides the
+/// actual transport cause. Include the error category and the full source chain so platform
+/// bindings can surface something actionable.
+fn describe(error: &reqwest::Error) -> String {
+    let kind = if error.is_timeout() {
+        "timeout"
+    } else if error.is_connect() {
+        "connect"
+    } else if error.is_request() {
+        "request"
+    } else if error.is_body() {
+        "body"
+    } else if error.is_decode() {
+        "decode"
+    } else {
+        "other"
+    };
+
+    let mut description = format!("{error} | kind={kind}");
+    let mut source = std::error::Error::source(error);
+    while let Some(cause) = source {
+        description.push_str(&format!(" | cause={cause}"));
+        source = cause.source();
+    }
+    description
+}
+
 impl HttpClient for ReqwestHttpClient {
     fn execute(&self, request: &HttpRequest) -> Result<HttpResponse, String> {
         let url = format!("{}{}", self.base_url, request.path);
@@ -83,7 +112,7 @@ impl HttpClient for ReqwestHttpClient {
                 .form(&request.form)
                 .send(),
         }
-        .map_err(|error| error.to_string())?;
+        .map_err(|error| describe(&error))?;
 
         let response_headers = response
             .headers()

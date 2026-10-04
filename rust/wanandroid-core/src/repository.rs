@@ -103,8 +103,11 @@ impl<C, S> WanAndroidRepository<C, S> {
                 message: envelope.error_msg,
             });
         }
-        serde_json::from_value(envelope.data)
-            .map_err(|error| RepositoryError::Decode(error.to_string()))
+        // A missing or null `data` is legitimate for endpoints such as collect/uncollect, which
+        // answer with `"data":null`. Deserializing into the target type still fails loudly when
+        // that endpoint genuinely owes a payload.
+        let data = envelope.data.unwrap_or(serde_json::Value::Null);
+        serde_json::from_value(data).map_err(|error| RepositoryError::Decode(error.to_string()))
     }
 }
 

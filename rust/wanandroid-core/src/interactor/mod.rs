@@ -1,3 +1,4 @@
+use crate::collection::CollectionRepository;
 use crate::repository::HomeRepository;
 
 pub mod auth;
@@ -10,7 +11,8 @@ pub struct CoreInteractor<R> {
     pub home: home::HomeInteractor<R>,
 }
 
-impl<R: HomeRepository> CoreInteractor<R> {
+// Home owns the collect toggle, so it needs the collection endpoints as well as the feed.
+impl<R: HomeRepository + CollectionRepository> CoreInteractor<R> {
     pub fn new(repository: R) -> Self {
         Self {
             home: home::HomeInteractor::new(repository),

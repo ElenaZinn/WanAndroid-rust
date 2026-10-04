@@ -44,8 +44,13 @@ pub struct Banner {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ApiEnvelope<T> {
     pub error_code: i32,
+    /// Present on success; the server omits it entirely for some failures.
+    #[serde(default)]
     pub error_msg: String,
-    pub data: T,
+    /// Optional so error payloads such as `{"errorCode":-1001,"errorMsg":"请先登录！"}`
+    /// still deserialize and can be reported as an API error instead of a decode failure.
+    #[serde(default)]
+    pub data: Option<T>,
 }
 
 #[derive(Debug, Deserialize)]

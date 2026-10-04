@@ -179,46 +179,53 @@ where
 
     fn run_home(&self, action: HomeAction) {
         let mut feature = self.home.lock().expect("core runtime mutex poisoned");
-        let effects = feature.dispatch(action).effects;
-        for effect in effects {
-            let result = feature.run(effect);
-            feature.dispatch(result);
+        let mut pending = vec![action];
+        while let Some(next) = pending.pop() {
+            for effect in feature.dispatch(next).effects {
+                // Running an effect yields the action that reports its outcome. Queue it so any
+                // effects that action triggers also run in the same pass.
+                pending.push(feature.run(effect));
+            }
         }
     }
 
     fn run_auth(&self, action: AuthAction) {
         let mut feature = self.auth.lock().expect("core runtime mutex poisoned");
-        let effects = feature.dispatch(action);
-        for effect in effects {
-            let result = feature.run(effect);
-            feature.dispatch(result);
+        let mut pending = vec![action];
+        while let Some(next) = pending.pop() {
+            for effect in feature.dispatch(next) {
+                pending.push(feature.run(effect));
+            }
         }
     }
 
     fn run_search(&self, action: SearchAction) {
         let mut feature = self.search.lock().expect("core runtime mutex poisoned");
-        let effects = feature.dispatch(action).effects;
-        for effect in effects {
-            let result = feature.run(effect);
-            feature.dispatch(result);
+        let mut pending = vec![action];
+        while let Some(next) = pending.pop() {
+            for effect in feature.dispatch(next).effects {
+                pending.push(feature.run(effect));
+            }
         }
     }
 
     fn run_project(&self, action: ProjectAction) {
         let mut feature = self.project.lock().expect("core runtime mutex poisoned");
-        let effects = feature.dispatch(action).effects;
-        for effect in effects {
-            let result = feature.run(effect);
-            feature.dispatch(result);
+        let mut pending = vec![action];
+        while let Some(next) = pending.pop() {
+            for effect in feature.dispatch(next).effects {
+                pending.push(feature.run(effect));
+            }
         }
     }
 
     fn run_collection(&self, action: CollectionAction) {
         let mut feature = self.collection.lock().expect("core runtime mutex poisoned");
-        let effects = feature.dispatch(action).effects;
-        for effect in effects {
-            let result = feature.run(effect);
-            feature.dispatch(result);
+        let mut pending = vec![action];
+        while let Some(next) = pending.pop() {
+            for effect in feature.dispatch(next).effects {
+                pending.push(feature.run(effect));
+            }
         }
     }
 }
@@ -233,9 +240,15 @@ pub struct CoreHandle {
 }
 
 impl CoreHandle {
-    pub fn new(timeout_ms: u64) -> Self {
-        let client = ReqwestHttpClient::wanandroid(Duration::from_millis(timeout_ms.max(1)))
-            .expect("reqwest client configuration must be valid");
+    /// `base_url` overrides the production endpoint. Hosts pass an explicit value to point
+    /// the shared core at a staging deployment or a local demo proxy; `None` uses production.
+    pub fn new(timeout_ms: u64, base_url: Option<String>) -> Self {
+        let timeout = Duration::from_millis(timeout_ms.max(1));
+        let client = match base_url {
+            Some(url) => ReqwestHttpClient::new(url, timeout),
+            None => ReqwestHttpClient::wanandroid(timeout),
+        }
+        .expect("reqwest client configuration must be valid");
         let repository = WanAndroidRepository::with_session(
             Arc::new(client),
             Arc::new(MemorySessionStore::default()),
@@ -272,7 +285,11 @@ impl From<&HomeState> for HomeSnapshot {
             banners,
             articles,
             is_loading: banners_loading || articles_loading,
-            error_message: banners_error.or(articles_error),
+            error_message: state
+                .last_error
+                .clone()
+                .or(banners_error)
+                .or(articles_error),
             can_load_more: state.has_more,
         }
     }

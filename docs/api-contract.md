@@ -1,6 +1,9 @@
 # API contract
 
-Base URL: `https://www.wanandroid.com/`
+Base URL: `https://wanandroid.com/`
+
+The official API documentation asks clients to use the bare `wanandroid.com` host
+rather than `www.wanandroid.com`.
 
 The server response envelope uses camelCase JSON keys:
 

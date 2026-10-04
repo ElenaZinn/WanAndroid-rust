@@ -59,7 +59,24 @@ impl<R: ProjectRepository> ProjectInteractor<R> {
             }
             ProjectAction::CategoriesLoaded(result) => {
                 self.state.categories = result.into();
-                ReduceResult::none()
+                // Auto-select the first category so the tab shows content without an extra tap.
+                let first_category = match &self.state.categories {
+                    LoadState::Ready(categories) => categories.first().map(|category| category.id),
+                    _ => None,
+                };
+                match first_category {
+                    Some(id) => {
+                        self.state.selected_category = Some(id);
+                        self.state.articles = LoadState::Loading;
+                        self.state.next_page = 0;
+                        self.state.has_more = true;
+                        ReduceResult::effects([ProjectEffect::GetArticles {
+                            page: 0,
+                            category_id: id,
+                        }])
+                    }
+                    None => ReduceResult::none(),
+                }
             }
             ProjectAction::SelectCategory { id } => {
                 self.state.selected_category = Some(id);

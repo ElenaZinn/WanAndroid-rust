@@ -2,8 +2,8 @@ use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 use wanandroid_core::transport::{HttpClient, HttpMethod, HttpRequest, HttpResponse};
 use wanandroid_core::{
-    AuthRepository, HomeRepository, MemorySessionStore, RepositoryError, SearchRepository,
-    SessionStore, WanAndroidRepository,
+    AuthRepository, CoreAction, CoreRuntime, HomeRepository, MemorySessionStore, RepositoryError,
+    SearchRepository, SessionStore, WanAndroidRepository,
 };
 
 struct FixtureClient {
@@ -213,6 +213,22 @@ fn maps_non_zero_api_code_to_repository_error() {
 }
 
 #[test]
+fn maps_error_response_without_data_field_to_api_error() {
+    // The server omits `data` entirely for failures such as a missing login, so the API error
+    // must be detected before any attempt to deserialize a payload.
+    let body = r#"{"errorCode":-1001,"errorMsg":"请先登录！"}"#;
+    let (_, repository) = fixture(body);
+    let error = repository.get_articles(0).expect_err("API error expected");
+    assert_eq!(
+        error,
+        RepositoryError::Api {
+            code: -1001,
+            message: "请先登录！".into(),
+        }
+    );
+}
+
+#[test]
 fn project_contract_uses_category_query_parameter() {
     use wanandroid_core::ProjectRepository;
     let requests = Arc::new(Mutex::new(Vec::new()));
@@ -229,6 +245,48 @@ fn project_contract_uses_category_query_parameter() {
     let requests = requests.lock().expect("request mutex poisoned");
     assert_eq!(requests[0].path, "/project/list/0/json?cid=77");
     assert_eq!(requests[0].method, HttpMethod::Get);
+}
+
+#[test]
+fn core_runtime_runs_effects_produced_by_earlier_effects() {
+    // Loading categories auto-selects the first category, so the runtime has to keep driving: the
+    // result of `GetCategories` produces the article request. Fixture responses are consumed LIFO.
+    let requests = Arc::new(Mutex::new(Vec::new()));
+    let client = Arc::new(FixtureClient {
+        responses: Mutex::new(vec![
+            HttpResponse {
+                body: r#"{"errorCode":0,"errorMsg":"","data":{"curPage":0,"datas":[],"over":true,"pageCount":0,"total":0}}"#.into(),
+                headers: BTreeMap::new(),
+            },
+            HttpResponse {
+                body: r#"{"errorCode":0,"errorMsg":"","data":[{"id":77,"name":"Compose","order":1,"visible":1}]}"#.into(),
+                headers: BTreeMap::new(),
+            },
+        ]),
+        requests: requests.clone(),
+    });
+
+    let runtime = CoreRuntime::new(WanAndroidRepository::new(client));
+    runtime.dispatch(CoreAction::ProjectLoadCategories);
+
+    let paths: Vec<String> = requests
+        .lock()
+        .expect("request mutex poisoned")
+        .iter()
+        .map(|request| request.path.clone())
+        .collect();
+    assert!(
+        paths
+            .iter()
+            .any(|path| path.starts_with("/project/tree/json")),
+        "categories request missing: {paths:?}"
+    );
+    assert!(
+        paths
+            .iter()
+            .any(|path| path.starts_with("/project/list/0/json")),
+        "auto-selected category articles request missing: {paths:?}"
+    );
 }
 
 #[test]

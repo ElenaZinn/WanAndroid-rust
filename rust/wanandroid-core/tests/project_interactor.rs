@@ -41,6 +41,22 @@ impl ProjectRepository for FakeProjects {
 }
 
 #[test]
+fn loading_categories_selects_the_first_category_and_requests_articles() {
+    let mut interactor = ProjectInteractor::new(FakeProjects);
+    let load = interactor.dispatch(ProjectAction::LoadCategories);
+    let action = interactor.run(load.effects[0].clone());
+    let after = interactor.dispatch(action);
+    assert_eq!(interactor.state.selected_category, Some(3));
+    assert_eq!(
+        after.effects,
+        vec![ProjectEffect::GetArticles {
+            page: 0,
+            category_id: 3,
+        }]
+    );
+}
+
+#[test]
 fn selecting_category_resets_and_pages_project_results() {
     let mut interactor = ProjectInteractor::new(FakeProjects);
     let categories = interactor.dispatch(ProjectAction::LoadCategories);

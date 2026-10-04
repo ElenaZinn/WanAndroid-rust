@@ -1,7 +1,7 @@
 namespace wanandroid {};
 
 interface CoreHandle {
-    constructor(u64 timeout_ms);
+    constructor(u64 timeout_ms, string? base_url);
     string snapshot_json();
     string dispatch_json(string action_json);
 };
