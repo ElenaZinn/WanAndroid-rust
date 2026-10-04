@@ -3,31 +3,25 @@ package com.elena.wanandroidrust.ui
 /**
  * Demo-only endpoint redirection.
  *
- * The API returns absolute URLs for banner images and article links. When the shared core is
- * pointed at a local demo proxy (see `BuildConfig.WANANDROID_BASE_URL`), those absolute URLs still
- * address the upstream host, which the app cannot reach. This rewrites them onto the same base URL
- * the core is using so images and article pages load through the proxy too.
+ * The API returns absolute URLs for banner images and article pages. When the shared core is
+ * pointed at a different endpoint (see `BuildConfig.WANANDROID_BASE_URL`), those absolute URLs
+ * still address the upstream host, which the app may not be able to reach.
  *
- * When no override is configured this is a no-op and the app behaves normally.
+ * This rewrites only the scheme and authority onto the configured endpoint and keeps the path, so
+ * no upstream host name is hard-coded in the Kotlin layer. When no override is configured this is
+ * a no-op.
  */
 object DemoEndpoint {
-    private val upstreamHosts = listOf(
-        "https://www.wanandroid.com",
-        "https://wanandroid.com",
-        "http://www.wanandroid.com",
-        "http://wanandroid.com",
-    )
-
     @Volatile
     var baseUrl: String? = null
 
     fun rewrite(url: String): String {
         val base = baseUrl?.takeIf { it.isNotBlank() } ?: return url
-        for (host in upstreamHosts) {
-            if (url.startsWith(host)) {
-                return base.trimEnd('/') + url.removePrefix(host)
-            }
-        }
-        return url
+        val schemeEnd = url.indexOf("://")
+        if (schemeEnd <= 0) return url
+        val authorityStart = schemeEnd + 3
+        val pathStart = url.indexOf('/', authorityStart)
+        val suffix = if (pathStart < 0) "" else url.substring(pathStart)
+        return base.trimEnd('/') + suffix
     }
 }
