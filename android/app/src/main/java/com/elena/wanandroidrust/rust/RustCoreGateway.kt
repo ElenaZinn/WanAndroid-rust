@@ -129,7 +129,7 @@ interface NativeRustCoreBinding {
 
 class NativeRustCoreGateway(
     private val binding: NativeRustCoreBinding,
-    scope: CoroutineScope,
+    private val scope: CoroutineScope,
     snapshotDecoder: (String) -> CoreSnapshot,
 ) : RustCoreGateway {
     private val snapshots: StateFlow<CoreSnapshot> = binding.snapshotJson
@@ -142,11 +142,26 @@ class NativeRustCoreGateway(
     override val projectState = snapshots.map { it.project }.stateIn(scope, SharingStarted.Eagerly, snapshots.value.project)
     override val collectionState = snapshots.map { it.collection }.stateIn(scope, SharingStarted.Eagerly, snapshots.value.collection)
 
-    override fun dispatch(action: HomeAction) = scope.launch(Dispatchers.IO) { binding.dispatchJson(action.toJson()) }
-    override fun dispatch(action: AuthAction) = scope.launch(Dispatchers.IO) { binding.dispatchJson(action.toJson()) }
-    override fun dispatch(action: SearchAction) = scope.launch(Dispatchers.IO) { binding.dispatchJson(action.toJson()) }
-    override fun dispatch(action: ProjectAction) = scope.launch(Dispatchers.IO) { binding.dispatchJson(action.toJson()) }
-    override fun dispatch(action: CollectionAction) = scope.launch(Dispatchers.IO) { binding.dispatchJson(action.toJson()) }
+    override fun dispatch(action: HomeAction) {
+        scope.launch(Dispatchers.IO) { binding.dispatchJson(action.toJson()) }
+    }
+
+    override fun dispatch(action: AuthAction) {
+        scope.launch(Dispatchers.IO) { binding.dispatchJson(action.toJson()) }
+    }
+
+    override fun dispatch(action: SearchAction) {
+        scope.launch(Dispatchers.IO) { binding.dispatchJson(action.toJson()) }
+    }
+
+    override fun dispatch(action: ProjectAction) {
+        scope.launch(Dispatchers.IO) { binding.dispatchJson(action.toJson()) }
+    }
+
+    override fun dispatch(action: CollectionAction) {
+        scope.launch(Dispatchers.IO) { binding.dispatchJson(action.toJson()) }
+    }
+
     fun close() = binding.close()
 }
 

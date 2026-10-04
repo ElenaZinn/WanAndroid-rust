@@ -745,7 +745,7 @@ internal interface UniffiLib : Library {
     ): Pointer
     fun uniffi_wanandroid_core_fn_free_corehandle(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_wanandroid_core_fn_constructor_corehandle_new(`timeoutMs`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_wanandroid_core_fn_constructor_corehandle_new(`timeoutMs`: Long,`baseUrl`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Pointer
     fun uniffi_wanandroid_core_fn_method_corehandle_dispatch_json(`ptr`: Pointer,`actionJson`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -892,7 +892,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_wanandroid_core_checksum_method_corehandle_snapshot_json() != 56974.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_wanandroid_core_checksum_constructor_corehandle_new() != 40722.toShort()) {
+    if (lib.uniffi_wanandroid_core_checksum_constructor_corehandle_new() != 4279.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
 }
@@ -1210,11 +1210,11 @@ open class CoreHandle: Disposable, AutoCloseable, CoreHandleInterface {
         this.pointer = null
         this.cleanable = UniffiLib.CLEANER.register(this, UniffiCleanAction(pointer))
     }
-    constructor(`timeoutMs`: kotlin.ULong) :
+    constructor(`timeoutMs`: kotlin.ULong, `baseUrl`: kotlin.String?) :
         this(
     uniffiRustCall() { _status ->
     UniffiLib.INSTANCE.uniffi_wanandroid_core_fn_constructor_corehandle_new(
-        FfiConverterULong.lower(`timeoutMs`),_status)
+        FfiConverterULong.lower(`timeoutMs`),FfiConverterOptionalString.lower(`baseUrl`),_status)
 }
     )
 
@@ -1338,6 +1338,38 @@ public object FfiConverterTypeCoreHandle: FfiConverter<CoreHandle, Pointer> {
         // The Rust code always expects pointers written as 8 bytes,
         // and will fail to compile if they don't fit.
         buf.putLong(Pointer.nativeValue(lower(value)))
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?> {
+    override fun read(buf: ByteBuffer): kotlin.String? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterString.read(buf)
+    }
+
+    override fun allocationSize(value: kotlin.String?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterString.allocationSize(value)
+        }
+    }
+
+    override fun write(value: kotlin.String?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterString.write(value, buf)
+        }
     }
 }
 

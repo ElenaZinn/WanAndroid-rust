@@ -8,3 +8,4 @@ android/**/build/
 android/rust-lib/*/libuniffi_wanandroid.so
 .tools/
 .DS_Store
+__pycache__/

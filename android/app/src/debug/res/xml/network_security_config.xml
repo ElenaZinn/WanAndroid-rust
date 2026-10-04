@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug-only network policy.
+
+  The release build keeps Android's default, so cleartext stays blocked there.
+  This variant permits plain HTTP so the app can reach a local demo proxy while
+  the upstream host's TLS certificate is unusable. Both loopback and the LAN
+  address are needed because the proxy is reached either through `adb reverse`
+  or directly over Wi-Fi.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>
