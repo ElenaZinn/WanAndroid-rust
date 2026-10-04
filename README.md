@@ -2,6 +2,25 @@
 
 Rust-first WanAndroid client foundation. Android UI is Kotlin/Jetpack Compose; shared API contracts, domain models and business state transitions live in Rust.
 
+## Origin
+
+This repository is the Rust-first rewrite of [ElenaZinn/WanAndroid](https://github.com/ElenaZinn/WanAndroid),
+which stays the behavioural reference for the client. The migration moves API contracts, DTO mapping,
+session/Cookie handling, pagination and business state transitions into Rust, and leaves Android as a
+thin Compose layer that renders snapshots.
+
+Porting history and the remaining matrix live in `docs/porting-guide.md`.
+
+## Demo
+
+A recorded walkthrough lives at [`docs/demo/wanandroid-rust-demo.mp4`](docs/demo/wanandroid-rust-demo.mp4):
+home banner carousel, article detail, search, project categories, collection and account.
+
+> The recording runs against a local proxy. `wanandroid.com`'s TLS certificate expired on
+> 2026-10-03 and the site redirects all plain HTTP to HTTPS, so a client that validates
+> certificates cannot reach the real API. The proxy relays real data; the app itself is unchanged.
+> See `docs/demo-recording.md` for the setup.
+
 ## Current scope
 
 - Rust `wanandroid-core` crate with API DTOs, domain models, Home/Auth/Search/Project/Collection repository abstractions and interactors.
@@ -10,6 +29,7 @@ Rust-first WanAndroid client foundation. Android UI is Kotlin/Jetpack Compose; s
 - JSON-friendly binding contract in `docs/binding-contract.md`.
 - Migration matrix and native binding rollout in `docs/porting-guide.md`.
 - UniFFI-generated Android bridge: `rust/wanandroid-core/src/wanandroid.udl`, generated Kotlin bindings, and `UniFfiRustCoreBinding.kt`.
+- Complete Compose UI: banner carousel with auto-advance, article cards, pull-to-refresh, infinite scroll, hot-key search, project category tabs, WebView detail and icon navigation.
 - No iOS code in the current phase.
 
 ## Local verification
@@ -21,7 +41,8 @@ cargo test --workspace
 ```
 
 `cargo` is installed for this workspace under `.tools/`; it is ignored by Git. Do not build an APK as part of the default validation because native/Gradle builds are intentionally expensive; Rust checks remain the fast gate.
-`cargo fmt`, `cargo clippy` and `cargo test` only require the Rust toolchain. Android SDK is not required for the default validation, and the README deliberately does not treat APK assembly as a default check. If a visual result, screenshot or recording is needed, prefer GitHub Codespaces to keep the local machine free of Android SDK/NDK installation and build artifacts.
+
+`cargo fmt`, `cargo clippy` and `cargo test` only require the Rust toolchain, so the default validation needs no Android SDK. Assembling an APK is a separate, deliberate step; the toolchain layout and build requirements are described in `docs/demo-recording.md`.
 
 ## Technical depth catch-up checklist
 
@@ -51,4 +72,7 @@ Compose UI -> ViewModel/StateFlow -> RustCoreGateway -> Interactor
                                       WanAndroid API
 ```
 
-GitHub remote: `git@github.com:ElenaZinn/WanAndroid-rust.git`
+## Repositories
+
+- This rewrite: `git@github.com:ElenaZinn/WanAndroid-rust.git`
+- Original client (behavioural reference): <https://github.com/ElenaZinn/WanAndroid>
