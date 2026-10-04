@@ -3,7 +3,12 @@ package com.elena.wanandroidrust
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -29,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.elena.wanandroidrust.rust.ArticleSnapshot
 import com.elena.wanandroidrust.rust.CoreJsonDecoder
@@ -52,13 +58,25 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // Empty build config means production; a value points the shared core at a demo endpoint.
         val baseUrl = BuildConfig.WANANDROID_BASE_URL.ifBlank { null }
-        val binding = UniFfiRustCoreBinding(baseUrl = baseUrl)
         // Banner images / article links arrive as absolute upstream URLs; keep them on the proxy.
         DemoEndpoint.baseUrl = baseUrl
-        nativeGateway = NativeRustCoreGateway(binding, lifecycleScope, CoreJsonDecoder::decode)
+
+        // Loading the Rust cdylib can fail on an unsupported ABI or a broken install. Report that
+        // instead of letting the process die before the first frame.
+        val startup = runCatching {
+            val binding = UniFfiRustCoreBinding(baseUrl = baseUrl)
+            NativeRustCoreGateway(binding, lifecycleScope, CoreJsonDecoder::decode)
+        }
+        nativeGateway = startup.getOrNull()
+
         setContent {
             WanAndroidTheme {
-                WanAndroidApp(requireNotNull(nativeGateway))
+                val gateway = nativeGateway
+                if (gateway == null) {
+                    StartupFailureScreen(startup.exceptionOrNull())
+                } else {
+                    WanAndroidApp(gateway)
+                }
             }
         }
     }
@@ -66,6 +84,31 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         nativeGateway?.close()
         super.onDestroy()
+    }
+}
+
+@Composable
+private fun StartupFailureScreen(cause: Throwable?) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text("Rust 核心加载失败", style = MaterialTheme.typography.titleLarge)
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = cause?.let { "${it::class.java.simpleName}: ${it.message}" }
+                ?: "未知错误",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.error,
+        )
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = "应用需要 arm64-v8a 的 libuniffi_wanandroid.so。请确认安装包完整，或重新执行 scripts/build-rust-android.sh 后重新构建。",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
